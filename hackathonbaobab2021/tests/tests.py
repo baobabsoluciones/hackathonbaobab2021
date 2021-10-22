@@ -93,4 +93,4 @@ class SportsScheduling(BaseDAGTests.SolvingTests):
         from hackathonbaobab2021 import SportsScheduling
 
         self.app = SportsScheduling()
-        self.config = dict(solver="default", threads=1, timeLimit=60, msg=False)
+        self.config = dict(solver="default", threads=1, timeLimit=1, msg=False)
