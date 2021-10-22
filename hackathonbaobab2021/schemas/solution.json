@@ -1,0 +1,25 @@
+{
+	"$schema": "http://json-schema.org/schema#",
+	"type": "object",
+	"properties": {
+		"assignment" : {
+			"type": "array",
+			"items": {
+				"type": "object",
+				"properties": {
+					"home": {
+						"type": "integer"
+					},
+					"away": {
+						"type": "integer"
+					},
+					"slot": {
+						"type": "integer"
+					}
+				},
+				"required": ["home", "away", "slot"]
+			}
+		}
+	},
+	"required": ["assignment"]
+}

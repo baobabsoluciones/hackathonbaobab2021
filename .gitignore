@@ -106,6 +106,8 @@ celerybeat.pid
 .venv
 env/
 venv/
+cfvenv/
+afvenv/
 ENV/
 env.bak/
 venv.bak/
@@ -127,3 +129,36 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+
+venv/
+
+*.pyc
+__pycache__/
+
+instance/
+
+.pytest_cache/
+.coverage
+htmlcov/
+
+dist/
+build/
+*.egg-info/
+
+.idea/*
+migrations/*
+
+# vagrant machine folder
+.vagrant
+
+# terraform folder and files
+.terraform
+*.tf
+
+# ssh keys
+cornssh
+cornssh.pub
+
+data/
+benchmark/

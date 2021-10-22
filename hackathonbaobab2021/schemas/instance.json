@@ -1,0 +1,300 @@
+{
+    "$schema": "http://json-schema.org/schema#",
+    "properties": {
+        "BR2": {
+            "items": {
+                "properties": {
+                    "_cat": {
+                        "type": "string"
+                    },
+                    "_id": {
+                        "type": "integer"
+                    },
+                    "homeMode": {
+                        "type": "string"
+                    },
+                    "intp": {
+                        "type": "string"
+                    },
+                    "mode2": {
+                        "type": "string"
+                    },
+                    "penalty": {
+                        "type": "string"
+                    },
+                    "slots": {
+                        "type": "string"
+                    },
+                    "teams": {
+                        "type": "string"
+                    },
+                    "type": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "_cat",
+                    "_id",
+                    "homeMode",
+                    "intp",
+                    "mode2",
+                    "penalty",
+                    "slots",
+                    "teams",
+                    "type"
+                ],
+                "type": "object"
+            },
+            "type": "array"
+        },
+        "CA1": {
+            "items": {
+                "properties": {
+                    "_cat": {
+                        "type": "string"
+                    },
+                    "_id": {
+                        "type": "integer"
+                    },
+                    "max": {
+                        "type": "string"
+                    },
+                    "min": {
+                        "type": "string"
+                    },
+                    "mode": {
+                        "type": "string"
+                    },
+                    "penalty": {
+                        "type": "string"
+                    },
+                    "slots": {
+                        "type": "string"
+                    },
+                    "teams": {
+                        "type": "string"
+                    },
+                    "type": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "_cat",
+                    "_id",
+                    "max",
+                    "min",
+                    "mode",
+                    "penalty",
+                    "slots",
+                    "teams",
+                    "type"
+                ],
+                "type": "object"
+            },
+            "type": "array"
+        },
+        "CA3": {
+            "items": {
+                "properties": {
+                    "_cat": {
+                        "type": "string"
+                    },
+                    "_id": {
+                        "type": "integer"
+                    },
+                    "intp": {
+                        "type": "string"
+                    },
+                    "max": {
+                        "type": "string"
+                    },
+                    "min": {
+                        "type": "string"
+                    },
+                    "mode1": {
+                        "type": "string"
+                    },
+                    "mode2": {
+                        "type": "string"
+                    },
+                    "penalty": {
+                        "type": "string"
+                    },
+                    "teams1": {
+                        "type": "string"
+                    },
+                    "teams2": {
+                        "type": "string"
+                    },
+                    "type": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "_cat",
+                    "_id",
+                    "intp",
+                    "max",
+                    "min",
+                    "mode1",
+                    "mode2",
+                    "penalty",
+                    "teams1",
+                    "teams2",
+                    "type"
+                ],
+                "type": "object"
+            },
+            "type": "array"
+        },
+        "GA1": {
+            "items": {
+                "properties": {
+                    "_cat": {
+                        "type": "string"
+                    },
+                    "_id": {
+                        "type": "integer"
+                    },
+                    "max": {
+                        "type": "string"
+                    },
+                    "meetings": {
+                        "type": "string"
+                    },
+                    "min": {
+                        "type": "string"
+                    },
+                    "penalty": {
+                        "type": "string"
+                    },
+                    "slots": {
+                        "type": "string"
+                    },
+                    "type": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "_cat",
+                    "_id",
+                    "max",
+                    "meetings",
+                    "min",
+                    "penalty",
+                    "slots",
+                    "type"
+                ],
+                "type": "object"
+            },
+            "type": "array"
+        },
+        "SE1": {
+            "items": {
+                "properties": {
+                    "_cat": {
+                        "type": "string"
+                    },
+                    "_id": {
+                        "type": "integer"
+                    },
+                    "min": {
+                        "type": "string"
+                    },
+                    "mode1": {
+                        "type": "string"
+                    },
+                    "penalty": {
+                        "type": "string"
+                    },
+                    "teams": {
+                        "type": "string"
+                    },
+                    "type": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "_cat",
+                    "_id",
+                    "min",
+                    "mode1",
+                    "penalty",
+                    "teams",
+                    "type"
+                ],
+                "type": "object"
+            },
+            "type": "array"
+        },
+        "leagues": {
+            "items": {
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "name": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "id",
+                    "name"
+                ],
+                "type": "object"
+            },
+            "type": "array"
+        },
+        "slots": {
+            "items": {
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "name": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "id",
+                    "name"
+                ],
+                "type": "object"
+            },
+            "type": "array"
+        },
+        "teams": {
+            "items": {
+                "properties": {
+                    "id": {
+                        "type": "string"
+                    },
+                    "league": {
+                        "type": "string"
+                    },
+                    "name": {
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "id",
+                    "league",
+                    "name"
+                ],
+                "type": "object"
+            },
+            "type": "array"
+        }
+    },
+    "required": [
+        "BR2",
+        "CA1",
+        "CA3",
+        "GA1",
+        "SE1",
+        "leagues",
+        "slots",
+        "teams"
+    ],
+    "type": "object"
+}

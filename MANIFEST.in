@@ -1,0 +1,12 @@
+include LICENSE
+include MANIFEST.in
+include README.md
+include setup.py
+include data/*.py
+include tests/*.py
+include hackathonbaobab2021/*.py
+include hackathonbaobab2021/core/*.py
+include hackathonbaobab2021/execution/*.py
+include hackathonbaobab2021/solvers/*.py
+include hackathonbaobab2021/schemas/*
+include hackathonbaobab2021/tests/*
