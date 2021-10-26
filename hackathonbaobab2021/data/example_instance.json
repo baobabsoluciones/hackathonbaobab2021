@@ -1,0 +1,71 @@
+{
+    "BR2": [],
+    "CA1": [],
+    "CA3": [],
+    "GA1": [],
+    "SE1": [
+        {
+            "_cat": "SE1",
+            "_id": 0,
+            "min": "1",
+            "mode1": "SLOTS",
+            "penalty": "10",
+            "teams": "0;1;2;3",
+            "type": "SOFT"
+        }
+    ],
+    "leagues": [
+        {
+            "id": "0",
+            "name": "League 0"
+        }
+    ],
+    "slots": [
+        {
+            "id": "0",
+            "name": "Slot 0"
+        },
+        {
+            "id": "1",
+            "name": "Slot 1"
+        },
+        {
+            "id": "2",
+            "name": "Slot 2"
+        },
+        {
+            "id": "3",
+            "name": "Slot 3"
+        },
+        {
+            "id": "4",
+            "name": "Slot 4"
+        },
+        {
+            "id": "5",
+            "name": "Slot 5"
+        }
+    ],
+    "teams": [
+        {
+            "id": "0",
+            "league": "0",
+            "name": "Team 0"
+        },
+        {
+            "id": "1",
+            "league": "0",
+            "name": "Team 1"
+        },
+        {
+            "id": "2",
+            "league": "0",
+            "name": "Team 2"
+        },
+        {
+            "id": "3",
+            "league": "0",
+            "name": "Team 3"
+        }
+    ]
+}

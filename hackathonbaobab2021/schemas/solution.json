@@ -8,13 +8,13 @@
 				"type": "object",
 				"properties": {
 					"home": {
-						"type": "integer"
+						"type": "string"
 					},
 					"away": {
-						"type": "integer"
+						"type": "string"
 					},
 					"slot": {
-						"type": "integer"
+						"type": "string"
 					}
 				},
 				"required": ["home", "away", "slot"]

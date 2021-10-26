@@ -2,23 +2,29 @@
 
 ## The problem
 
+The problem is the one used for the [ITC 2021: International Timetabling Competition on Sports Timetabling](https://www.sportscheduling.ugent.be/ITC2021/index.php).
+
 The following is a very succinct summary from the document found in `hackathonbaobab2021/data/OrganizationITC2021_V7.pdf`, which explains in detail everything about the problem, data format, etc.
 
-We want to plan one on one matches between sports team that belong to a single league (we assume there's only one league). We call the complete set of matches a tournament. This tournament follows a double round-robin. This implies that every team plays against every other team two times: once in their home stadium, the other in the adversary's. As a result we have `(N - 1) x 2` matches per team, where `N` is the total number of teams. 
+We want to plan one-on-one matches between sports team that belong to a single league (we assume there's only one league). We call the complete set of matches a tournament. This tournament follows a double round-robin. This implies that every team plays against every other team two times: once in their home stadium, the other in the adversary's. As a result we have `(N - 1) x 2` matches per team, where `N` is the total number of teams. 
 
-The planning horizon is divided in slots. Since we assume that each team plays exactly once per slot (i.e., this is a "time-constrained timetable"), we have `(N-1)x2` slots. We also assume an even number of teams.
+The planning horizon is divided into slots. We assume that each team plays exactly once per slot (i.e., this is a "time-constrained timetable") and thus we have `(N - 1) x 2` slots. We also assume an even number of teams.
 
 There are several types of constraints that we briefly present here. For more details and examples, please refer to the original document cited above.
 
-There are both soft and hard constraints. Soft ones are indicated with SOFT tag and include a PENALTY for each unit of violation. The unit of violation depends on the constraint. Hard are tagged as HARD and must be complied in order to have a valid solution.
+## Constraints
+
+There are both soft and hard constraints. Soft ones are indicated with SOFT tag and include a PENALTY for each unit of violation. The unit of violation depends on the constraint. Hard ones are tagged as HARD and must be complied in order to have a valid solution.
 
 ### Objective function
 
-We want to minimize the sum of soft constraints violations.
+We want to minimize the sum of penalized soft constraints violations.
 
 ### Structure
 
-If the timetable instance is "phased", then the first half of slots in the tournament is a complete round-robin and the second half is another complete round-robin. That is, Each pair of teams only sees each other once in each half, with their home-away status inverted between halfs.
+If the timetable instance is "phased", then the first half of slots in the tournament is a complete round-robin and the second half is another complete round-robin. That is, Each pair of teams only sees each other once in each half, with their home-away status inverted between halves.
+
+The rest of the constraints are copied from the original source.
 
 ### Capacity
 
@@ -120,7 +126,7 @@ This format is used for most sports scheduling problems, which includes the ones
 
 To understand the format of the input data file, you can check how we parse it in python in the function `Instance.from_xml(path)` in the file`hackathonbaobab2021/core/instance.py`
 
-We provide full I/O integration with the RobinX XML format for the Instance and Solution.
+We provide full I/O integration with the RobinX XML format for the Instance and Solution via the `from_xml` and `to_xml` methods.
 
 ## The json-schema format
 
@@ -132,15 +138,17 @@ As always, these schemas are found in the `hackathonbaobab2021/schemas` folder.
 
 There is a [web checker in the site of the original challenge](https://www.sportscheduling.ugent.be/ITC2021/validator.php) where you can paste your solution and see the validations.
 
-Alternatively, the organizers have kindly [shared the code of the checker in github](https://github.com/Robin-X/RobinX/) so it can be run locally (it has been tested in Linux exclusively).
+Alternatively, the organizers have kindly [shared the code of the checker in github](https://github.com/Robin-X/RobinX/) so it can be run locally. It has been tested in Linux exclusively.
 
-Finally, we provide through the `Experiment.check_solution` method, the same validations as the original ones.
+Finally, we provide a port of those same validations through the `Experiment.check_solution` method.
 
-In case you find differences between validations, let us know. 
+In case you find differences between validations, let us know. The original validations have priority over our own port. 
 
 ## Requisites and download
 
 python>=3.6 and git are needed. All command line actions assume a Windows machine.
+
+Download the repository to your machine:
 
 ```bash
 git clone git@github.com:baobabsoluciones/hackathonbaobab2021.git
@@ -154,7 +162,7 @@ To install from source:
 cd hackathonbaobab2021
 python -m venv venv
 venv/Scripts/activate
-pip install -r requirements.txt
+python -m pip install -r requirements.txt
 ```
 
 ## How to add a new solver
@@ -162,10 +170,11 @@ pip install -r requirements.txt
 These are the steps to add a solver and make it compatible with the command line and the python functions:
 
 1. Add a file inside the `hackathonbaobab2021/solver` directory with a subclass of `hackathonbaobab2021.core.experiment.Experiment` that implements, at least, the `solve()` method *with the same argument and argument names*.
-1. Your `solve` method needs to return a dictionary with the following format `dict(status=INTEGER, status_sol=INTEGER)`. The codes for the status and solution status are taken from `cornflow_client.constants`.
-1. Your `solve` method also needs to store the best solution found in `self.solution`. It needs to be an instance of the `Solution` object.
-1. Edit the `hackathonbaobab2021/solver/__init__.py` to import your solver and edit the `hackathonbaobab2021.SportsScheduling.solvers` property by giving your solver a name.
-1. If the `requirements.txt` file is missing some package you need for your solver, add it to the list under `solvers`. Also edit the `setup.py` and add the dependency on `solvers` within the `extras_require` dictionary.
+2. Your `solve` method needs to return a dictionary with the following format `dict(status=INTEGER, status_sol=INTEGER)`. The codes for the status and solution status are taken from `cornflow_client.constants`.
+3. Your `solve` method also needs to store the best solution found in `self.solution`. It needs to be an instance of the `Solution` object.
+4. Edit the `hackathonbaobab2021/solver/__init__.py` to import your solver and edit the `hackathonbaobab2021.SportsScheduling.solvers` property by giving your solver a name.
+5. If the `requirements.txt` file is missing some package you need for your solver, add it to the list under `solvers`. Also edit the `setup.py` and add the dependency on `solvers` within the `extras_require` dictionary.
+6. Add a method to `hackathonbaobab2021.tests.tests.SportsScheduling` with your solver configuration.
 
 **Additional considerations**:
 
@@ -178,6 +187,13 @@ These tests are run also in github and test the smallest example with a `timelim
 ```
 python -m unittest hackathonbaobab2021/tests/tests.py 
  ```
+
+If you only want to test one solver, you can do the following (assuming your method is called `test_default`:
+
+```
+python -m unittest hackathonbaobab2021.tests.tests.SportsScheduling.test_default
+```
+
 
 ## Command line
 

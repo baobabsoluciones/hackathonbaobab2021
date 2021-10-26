@@ -4,23 +4,33 @@ from cornflow_client.constants import (
     STATUS_UNDEFINED,
     SOLUTION_STATUS_FEASIBLE,
 )
+from itertools import permutations
 
 
 class Default(Experiment):
     def solve(self, options: dict) -> dict:
         teams = self.instance.get_teams().keys_tl()
         size = len(teams)
-        slots = range((size - 1) * 2)
+        slots = self.instance.get_slots().keys_tl()
+        matches_per_slot = size // 2
 
-        # each team plays with the next team in the list.
-        def get_rival_pos(team_pos, day):
-            return (team_pos + day + 1) % size
+        def find_match(remaining: set, already_scheduled: set):
+            for home, away in remaining:
+                if home not in already_scheduled and away not in already_scheduled:
+                    already_scheduled.add(home)
+                    already_scheduled.add(away)
+                    el = (home, away)
+                    remaining.remove(el)
+                    return el
+
+        remaining = set(permutations(teams, 2))
 
         solution = TupList()
-        for day in slots:
-            for pos, team in enumerate(teams):
-                rival_pos = get_rival_pos(pos, day)
-                solution.append(dict(home=team, away=teams[rival_pos], slot=day))
+        for pos_slot, slot in enumerate(slots):
+            already_scheduled = set()
+            for pos_match in range(matches_per_slot):
+                match = find_match(remaining, already_scheduled)
+                solution.append(dict(home=match[0], away=match[1], slot=slot))
 
         self.solution = Solution(dict(assignment=solution))
         return dict(status=STATUS_UNDEFINED, status_sol=SOLUTION_STATUS_FEASIBLE)

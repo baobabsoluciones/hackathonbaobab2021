@@ -11,7 +11,7 @@ class Solution(SolutionCore):
 
     def __init__(self, data: dict) -> None:
         super().__init__(data)
-        data["assignment"] = TupList(data["assignment"])
+        self.data["assignment"] = TupList(data["assignment"])
 
     @property
     def data(self) -> SuperDict:
