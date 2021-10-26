@@ -14,9 +14,13 @@ class Default(Experiment):
         slots = self.instance.get_slots().keys_tl()
         matches_per_slot = size // 2
 
-        def find_match(remaining: set, already_scheduled: set):
+        def find_match(remaining: set, already_scheduled: set, check: bool = True):
             for home, away in remaining:
-                if home not in already_scheduled and away not in already_scheduled:
+                if (
+                    home not in already_scheduled
+                    and away not in already_scheduled
+                    or not check
+                ):
                     already_scheduled.add(home)
                     already_scheduled.add(away)
                     el = (home, away)
@@ -30,6 +34,9 @@ class Default(Experiment):
             already_scheduled = set()
             for pos_match in range(matches_per_slot):
                 match = find_match(remaining, already_scheduled)
+                if match is None:
+                    # we give up looking
+                    match = find_match(remaining, already_scheduled, False)
                 solution.append(dict(home=match[0], away=match[1], slot=slot))
 
         self.solution = Solution(dict(assignment=solution))

@@ -1,4 +1,3 @@
-import pytups as pt
 import os
 from .instance import Instance
 from .solution import Solution
@@ -8,13 +7,16 @@ from typing import List
 from cornflow_client import ExperimentCore
 import xml.etree.ElementTree as ET
 from .tools import indent
+from pytups import SuperDict, TupList
+
+abbrv = SuperDict(H="home", A="away")
 
 
 class Experiment(ExperimentCore):
     def __init__(self, instance: Instance, solution: Solution = None):
         super().__init__(instance, solution)
         if solution is None:
-            solution = Solution(pt.SuperDict(assignment=pt.TupList()))
+            solution = Solution(SuperDict(assignment=TupList()))
         self.solution = solution
         return
 
@@ -61,17 +63,20 @@ class Experiment(ExperimentCore):
     def solve(self, options: dict):
         raise NotImplementedError("complete this!")
 
-    def check_solution(self, list_tests: List[str] = None, **params) -> pt.SuperDict:
+    def check_solution(self, list_tests: List[str] = None, **params) -> SuperDict:
         # simple checks:
         # each team plays twice
-        return pt.SuperDict(
-            num_away=self.check_num_away(), num_home=self.check_num_home()
+        return SuperDict(
+            num_away=self.check_num_away(),
+            num_home=self.check_num_home(),
+            one_match_slot=self.check_one_match_per_slot(),
+            CA1=self.check_CA1(),
         )
 
     def check_num_away(self):
         assignment = self.solution.get_assignment()
         teams = self.instance.get_teams("id").vapply(lambda v: 0)
-        num_matches = (len(teams) - 1) * 2
+        num_matches = len(teams) - 1
         return (
             assignment.to_dict(result_col=["slot"], indices=["away"])
             .to_lendict()
@@ -79,10 +84,63 @@ class Experiment(ExperimentCore):
             .vfilter(lambda v: v != num_matches)
         )
 
+    def check_one_match_per_slot(self):
+        """
+        returns the (slot, team) combinations where the team plays more than once
+        """
+        assignment = self.solution.get_assignment()
+        home = assignment.to_dict(result_col=["home"], indices=["slot"])
+        away = assignment.to_dict(result_col=["away"], indices=["slot"])
+        return (
+            (home + away)
+            .to_tuplist()
+            .to_dict(result_col=[0, 1], indices=[0, 1])
+            .vfilter(lambda v: len(v) > 1)
+            .vapply(lambda v: 1)
+        )
+
+    def team_slot(self):
+        """
+        for each team, for each timeslot: H or A
+        """
+        assignment = self.solution.get_assignment()
+        result = SuperDict()
+        for key, name in abbrv.items():
+            _v = assignment.take([name, "slot"]).to_dict(None).vapply(lambda v: key)
+            result.update(_v)
+        return result.to_dictdict()
+
+    def check_CA1(self):
+        constraints = self.instance.get_constraint("CA1")
+        team_slot = self.team_slot()
+        # make one single comparison
+        _max_violations = {
+            (c["_id"], team, slot): (team_slot.get_m(team, slot) == c["mode"])
+            - int(c["max"])
+            for c in constraints.values()
+            for team in c["teams"]
+            for slot in c["slots"]
+        }
+        _min_violations = {
+            (c["_id"], team, slot): (team_slot.get_m(team, slot) == c["mode"])
+            - int(c["min"])
+            for c in constraints.values()
+            for team in c["teams"]
+            for slot in c["slots"]
+        }
+        result = SuperDict(_max_violations).vfilter(lambda v: v > 0)
+        _min = SuperDict(_min_violations).vfilter(lambda v: v < 0)
+        result.update(_min)
+        return result
+
+    def check_CA3(self):
+
+        pass
+
     def check_num_home(self):
         assignment = self.solution.get_assignment()
         teams = self.instance.get_teams("id").vapply(lambda v: 0)
-        num_matches = (len(teams) - 1) * 2
+        num_matches = len(teams) - 1
         return (
             assignment.to_dict(result_col=["slot"], indices=["home"])
             .to_lendict()

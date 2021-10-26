@@ -15,7 +15,7 @@ C_CLUSTER = SuperDict(
 )
 
 C_CAT = SuperDict(
-    CA1=["slots"],
+    CA1=["slots", "teams"],
     CA3=["teams1", "teams2"],
     GA1=["meetings", "slots"],
     BR2=["slots", "teams"],
@@ -39,6 +39,11 @@ class Instance(InstanceCore):
     @data.setter
     def data(self, value: SuperDict):
         self._data = value
+
+    def get_constraint(self, tag, c_type=None):
+        if c_type is None:
+            return self.data[tag]
+        self.data[tag].vfilter(lambda v: v["type"] == c_type)
 
     def get_teams(self, property=None) -> SuperDict:
         if property is None:

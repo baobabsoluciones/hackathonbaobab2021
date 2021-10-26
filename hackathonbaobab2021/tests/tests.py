@@ -128,5 +128,13 @@ class SportsSchedulingTest(BaseDAGTests.SolvingTests):
         Solution = self.app.solution
         Experiment = self.app.get_solver("default")
         experiment = Experiment(Instance(second_test[0]), Solution(second_test[1]))
-        experiment.to_xml("asd.xml")
+        experiment.to_xml(self.tem_path + "asd.xml")
+
+    def test_check_solution(self):
+        filename = os.path.join(os.path.dirname(__file__), "../data/ITC2021_Test1.xml")
+        instance = self.app.instance.from_xml(filename)
+        Experiment = self.app.get_solver("default")
+        experiment = Experiment(instance)
+        experiment.solve({})
+        errors = experiment.check_solution()
         pass
