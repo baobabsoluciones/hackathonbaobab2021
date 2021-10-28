@@ -1,4 +1,4 @@
-from pytups import TupList
+from pytups import TupList, OrderSet
 import os
 from cornflow_client import InstanceCore
 from cornflow_client.core.tools import load_json
@@ -16,10 +16,14 @@ C_CLUSTER = SuperDict(
 
 C_CAT = SuperDict(
     CA1=["slots", "teams"],
+    CA2=["slots", "teams1", "teams2"],
     CA3=["teams1", "teams2"],
+    CA4=["teams1", "teams2", "slots"],
     GA1=["meetings", "slots"],
+    BR1=["teams", "slots"],
     BR2=["slots", "teams"],
     SE1=["teams"],
+    FA2=["teams", "slots"],
 )
 C_TUPLES = SuperDict(GA1=SuperDict(meetings=True))
 
@@ -28,6 +32,10 @@ _CAT = "_cat"
 
 
 class Instance(InstanceCore):
+    def __init__(self, data: SuperDict):
+        super().__init__(data)
+        self.slots = OrderSet(data["slots"].keys_tl().sorted())
+
     schema = load_json(
         os.path.join(os.path.dirname(__file__), "../schemas/instance.json")
     )
@@ -40,7 +48,7 @@ class Instance(InstanceCore):
     def data(self, value: SuperDict):
         self._data = value
 
-    def get_constraint(self, tag, c_type=None):
+    def get_constraint(self, tag, c_type=None) -> SuperDict:
         if c_type is None:
             return self.data[tag]
         self.data[tag].vfilter(lambda v: v["type"] == c_type)
@@ -142,6 +150,11 @@ def flatten_constraint(constraint):
         # we flatten the lists
         _list = ";".join(_list)
         constraint[key] = _list
+    for el in ["min", "max"]:
+        try:
+            constraint[el] = str(constraint[el])
+        except:
+            continue
 
 
 def unflatten_constraint(constraint):
@@ -151,3 +164,8 @@ def unflatten_constraint(constraint):
         if len(_list) and C_TUPLES.get_m(constraint[_CAT], key):
             _list = _list.vapply(lambda v: tuple(v.split(",")))
         constraint[key] = _list
+    for el in ["min", "max", "intp"]:
+        try:
+            constraint[el] = int(constraint[el])
+        except:
+            continue

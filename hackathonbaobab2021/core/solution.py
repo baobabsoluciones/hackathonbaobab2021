@@ -21,5 +21,5 @@ class Solution(SolutionCore):
     def data(self, value: SuperDict):
         self._data = value
 
-    def get_assignment(self):
+    def get_assignment(self) -> TupList:
         return self.data["assignment"]

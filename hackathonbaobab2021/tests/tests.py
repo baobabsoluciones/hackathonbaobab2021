@@ -131,10 +131,14 @@ class SportsSchedulingTest(BaseDAGTests.SolvingTests):
         experiment.to_xml(self.tem_path + "asd.xml")
 
     def test_check_solution(self):
-        filename = os.path.join(os.path.dirname(__file__), "../data/ITC2021_Test1.xml")
-        instance = self.app.instance.from_xml(filename)
-        Experiment = self.app.get_solver("default")
-        experiment = Experiment(instance)
-        experiment.solve({})
-        errors = experiment.check_solution()
-        pass
+        cases = [
+            os.path.join(os.path.dirname(__file__), "../data/{}.xml".format(f))
+            for f in ["ITC2021_Test1", "ITC2021_Test2", "ITC2021_Test3"]
+        ]
+        for filename in cases:
+            instance = self.app.instance.from_xml(filename)
+            Experiment = self.app.get_solver("default")
+            experiment = Experiment(instance)
+            experiment.solve({})
+            errors = experiment.check_solution()
+            pass

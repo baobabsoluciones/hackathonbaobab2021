@@ -3,11 +3,13 @@ from .instance import Instance
 from .solution import Solution
 from . import tools as di
 from zipfile import ZipFile
-from typing import List
+from typing import List, Union
 from cornflow_client import ExperimentCore
 import xml.etree.ElementTree as ET
 from .tools import indent
 from pytups import SuperDict, TupList
+
+from itertools import combinations
 
 abbrv = SuperDict(H="home", A="away")
 
@@ -71,6 +73,15 @@ class Experiment(ExperimentCore):
             num_home=self.check_num_home(),
             one_match_slot=self.check_one_match_per_slot(),
             CA1=self.check_CA1(),
+            CA2=self.check_CA2(),
+            CA3=self.check_CA3(),
+            CA4_slots=self.check_CA4_slots(),
+            CA4_global=self.check_CA4_global(),
+            GA1=self.check_GA1(),
+            SE1=self.check_SE1(),
+            BR1=self.check_BR1(),
+            BR2=self.check_BR2(),
+            FA2=self.check_FA2(),
         )
 
     def check_num_away(self):
@@ -101,7 +112,7 @@ class Experiment(ExperimentCore):
 
     def team_slot(self):
         """
-        for each team, for each timeslot: H or A
+        for each team, for each slot: H or A
         """
         assignment = self.solution.get_assignment()
         result = SuperDict()
@@ -110,32 +121,220 @@ class Experiment(ExperimentCore):
             result.update(_v)
         return result.to_dictdict()
 
+    def get_match_slot(self):
+        """
+        for each match, the slot when it happened
+        """
+        assignment = self.solution.get_assignment()
+        return assignment.to_dict(
+            result_col=["slot"], indices=["home", "away"], is_list=False
+        )
+
+    def get_pair_slots(self):
+        """
+        for each pair (a, b) | (a < b), the ordered slots they play.
+        """
+        match_slot = self.get_match_slot().vapply(TupList)
+        return (
+            match_slot.kfilter(lambda k: k[0] < k[1])
+            .kvapply(lambda k, v: v + match_slot[k[1], k[0]])
+            .vapply(sorted)
+        )
+
+    def get_acc(self, check="H"):
+        """
+        for each (team, slot): accumulate H (or A if not home).
+        """
+        slots = self.instance.slots
+        team_slot = self.team_slot()
+        teams = self.instance.get_teams()
+        acc = SuperDict()
+        for team in teams:
+            _acc = 0
+            for slot in slots:
+                _acc += team_slot.get_m(team, slot) == check
+                acc[team, slot] = _acc
+        return acc
+
+    def check_FA2(self):
+        acc_homes = self.get_acc(check="H")
+        constraints = self.instance.get_constraint("FA2")
+        err = SuperDict()
+        for k, c in constraints.items():
+            pairs = TupList(combinations(c["teams"], 2)).vapply(get_sym)
+            err[k] = (
+                pairs.to_dict(None)
+                .vapply(
+                    lambda v: max(
+                        abs(acc_homes[v[0], slot] - acc_homes[v[1], slot])
+                        for slot in c["slots"]
+                    )
+                )
+                .vfilter(lambda v: v - c["intp"])
+            )
+        return err.to_dictdict().to_dictup()
+
     def check_CA1(self):
+        """
+        "for each (c, team, slot) => violation"
+        """
         constraints = self.instance.get_constraint("CA1")
         team_slot = self.team_slot()
         # make one single comparison
-        _max_violations = {
-            (c["_id"], team, slot): (team_slot.get_m(team, slot) == c["mode"])
-            - int(c["max"])
-            for c in constraints.values()
+        value = {
+            (k, team, slot): team_slot.get_m(team, slot) == c["mode"]
+            for k, c in constraints.items()
             for team in c["teams"]
             for slot in c["slots"]
         }
-        _min_violations = {
-            (c["_id"], team, slot): (team_slot.get_m(team, slot) == c["mode"])
-            - int(c["min"])
-            for c in constraints.values()
-            for team in c["teams"]
-            for slot in c["slots"]
-        }
-        result = SuperDict(_max_violations).vfilter(lambda v: v > 0)
-        _min = SuperDict(_min_violations).vfilter(lambda v: v < 0)
-        result.update(_min)
-        return result
+        return compare(SuperDict(value), constraints, side=None)
+
+    def check_CA2(self):
+        matches = self.solution.get_assignment().take(["home", "away", "slot"]).to_set()
+        constraints = self.instance.get_constraint("CA2")
+        # we index by constraint and team1
+        # we apply the mode to expand or move the home away
+        # we intersect with the solution and get the number of finds
+        value = (
+            constraints.vapply(get_matches_slots_constraint)
+            .to_tuplist()
+            .to_dict(result_col=[1, 2, 3], indices=[0, 1])
+            .kvapply(lambda k, v: apply_mode(v, mode=constraints[k[0]]["mode2"]))
+            .vapply(lambda v: v.intersect(matches).len())
+        )
+        return compare(value, constraints, side=None)
 
     def check_CA3(self):
+        "for each (c, team) => violation"
+        matches = self.solution.get_assignment().take(["home", "away", "slot"]).to_set()
+        constraints = self.instance.get_constraint("CA3")
+        all_slots = self.instance.slots
+        value = SuperDict()
+        for k, c in constraints.items():
+            # for each slot, we want c["intp"] consecutive slots:
+            slot_slots = TupList(
+                (start, slot)
+                for pos, start in enumerate(all_slots[: -c["intp"] + 1])
+                for slot in all_slots[pos : pos + c["intp"]]
+            ).to_dict(result_col=1)
+            # for each team and slot, we get all matches and slots to check
+            check = {
+                (team, start): [
+                    (team, rival, slot) for rival in c["teams2"] for slot in slots
+                ]
+                for team in c["teams1"]
+                for start, slots in slot_slots.items()
+            }
+            # we order the matches and compare it with the solution, only store violations
+            value[k] = (
+                SuperDict(check)
+                .vapply(TupList)
+                .vapply(apply_mode, mode=c["mode1"])
+                .vapply(lambda v: v.intersect(matches).len())
+                .vfilter(lambda v: v > c["max"])
+            )
+        return value.to_dictup()
 
-        pass
+    def check_CA4_global(self):
+        """
+        for each (constraint, ) => violation
+        """
+        matches = self.solution.get_assignment().take(["home", "away", "slot"]).to_set()
+        constraints = self.instance.get_constraint("CA4").vfilter(
+            lambda c: c["mode2"] == "GLOBAL"
+        )
+        _func = (
+            lambda v: get_matches_slots_constraint(v)
+            .vapply(apply_mode, mode=v["mode2"])
+            .to_set()
+        )
+        value = {(k,): len(_func(c) & matches) for k, c in constraints.items()}
+        return compare(SuperDict(value), constraints, "max")
+
+    def check_CA4_slots(self):
+        """
+        for each (constraint, slot) => violation
+        """
+        matches = self.solution.get_assignment().take(["home", "away", "slot"]).to_set()
+        constraints = self.instance.get_constraint("CA4").vfilter(
+            lambda c: c["mode2"] == "EVERY"
+        )
+        _func = (
+            lambda v: get_matches_slots_constraint(v)
+            .vapply(apply_mode, mode=v["mode2"])
+            .to_set()
+        )
+        value = {k: TupList(_func(c) & matches) for k, c in constraints.items()}
+        value = (
+            SuperDict(value)
+            .vapply(lambda v: v.to_dict(result_col=[0, 1]).to_lendict())
+            .to_dictup()
+        )
+        return compare(value, constraints, "max")
+
+    def check_GA1(self):
+        constraints = self.instance.get_constraint("GA1")
+        match_slot = self.get_match_slot()
+        value = {
+            (k, match, slot): match_slot.get(match) == slot
+            for k, c in constraints.items()
+            for match in c["meetings"]
+            for slot in c["slots"]
+        }
+        return compare(SuperDict(value), constraints, side=None)
+
+    def check_SE1(self):
+        constraints = self.instance.get_constraint("SE1")
+        value = SuperDict()
+        _dist = self.instance.slots.dist
+        for k, c in constraints.items():
+            pairs = TupList(combinations(c["teams"], 2)).vapply(get_sym)
+            value[k] = self.get_pair_slots().filter(pairs).vapply(lambda v: _dist(*v))
+        return compare(value.to_dictdict().to_dictup(), constraints, side="min")
+
+    def check_BR1(self):
+        breaks = self.count_breaks().to_tuplist().to_set()
+        constraints = self.instance.get_constraint("BR1")
+        value = SuperDict()
+        for k, c in constraints.items():
+            if c["mode2"] in ["A", "H"]:
+                # we pass the team to away position
+                modes = [c["mode2"]]
+            else:
+                # c["mode1"] == "HA"
+                modes = ["H", "A"]
+            check = TupList(
+                (team, slot, mode)
+                for team in c["teams"]
+                for slot in c["slots"]
+                for mode in modes
+            ).to_set()
+            value[k,] = (
+                len((check & breaks)) - c["intp"]
+            )
+        return SuperDict(value).vfilter(lambda v: v > 0)
+
+    def check_BR2(self):
+        breaks = self.count_breaks()
+        constraints = self.instance.get_constraint("BR2")
+        value = {
+            k: breaks.kfilter(lambda v: v[0] in c["teams"] and v[1] in c["slots"]).len()
+            - c["intp"]
+            for k, c in constraints.items()
+        }
+        return SuperDict(value).vfilter(lambda v: v > 0)
+
+    def count_breaks(self):
+        """
+        (team, slot) when the team starts a break
+        """
+        prev = self.instance.slots.prev
+        first = self.instance.slots[0]
+        t_prev = lambda k: (k[0], prev(k[1]))
+        team_slot = self.team_slot().to_dictup()
+        return team_slot.kfilter(lambda k: k[1] != first).kvfilter(
+            lambda k, v: v != team_slot.get(t_prev(k))
+        )
 
     def check_num_home(self):
         assignment = self.solution.get_assignment()
@@ -200,3 +399,53 @@ class Experiment(ExperimentCore):
         for el in assignment:
             games.append(el)
         return games
+
+
+def compare(_dict: SuperDict, constraints, side: Union[str, None] = "min"):
+    if side is None:
+        # we overload the function to calculate both sides
+        _max = compare(_dict, constraints, side="max")
+        _min = compare(_dict, constraints, side="min")
+        return _max._update(_min)
+    if side == "min":
+        _func = lambda v: v < 0
+    else:  #  max
+        _func = lambda v: v > 0
+    return (
+        SuperDict(_dict)
+        .kvapply(lambda k, v: v - constraints[k[0]][side])
+        .vfilter(_func)
+    )
+
+
+def get_sym(pair):
+    if pair[0] > pair[1]:
+        return pair[1], pair[0]
+    else:
+        return pair
+
+
+def apply_mode(tup_list, mode):
+    if mode == "A":
+        # we pass the team to away position
+        return tup_list.vapply(lambda v: (v[1], v[0], v[2]))
+    elif mode == "HA":
+        # we duplicate the rows to check both positions
+        return tup_list + tup_list.vapply(lambda v: (v[1], v[0], v[2]))
+    # mode = H
+    return tup_list
+
+
+def get_matches_slots_constraint(constraint):
+    """
+    Returns the values that we look to count in a solution, based on the
+        information on the constraint
+
+    """
+    check = TupList(
+        (team, rival, slot)
+        for team in constraint["teams1"]
+        for rival in constraint["teams2"]
+        for slot in constraint["slots"]
+    )
+    return check
