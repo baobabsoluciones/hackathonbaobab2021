@@ -1,5 +1,5 @@
 import os
-from typing import Dict, List, Type
+from typing import Dict, List, Type, Union
 from cornflow_client import ApplicationCore, get_empty_schema
 from cornflow_client.core.tools import load_json
 from .core import Instance, Experiment, Solution, Batch, ZipBatch
@@ -30,16 +30,15 @@ class SportsScheduling(ApplicationCore):
     def solution(self) -> Type[Solution]:
         return Solution
 
-    def get_solver(self, name="default") -> Type[Experiment]:
+    def get_solver(self, name: str = "default") -> Union[None, Type[Experiment]]:
         return super().get_solver(name)
 
     @property
     def test_cases(self) -> List[Dict]:
-        path = os.path.join(os.path.dirname(__file__), "data/TestInstanceDemo.xml")
-        _json = os.path.join(os.path.dirname(__file__), "data/example_instance.json")
-        _json_sol = os.path.join(
-            os.path.dirname(__file__), "data/example_solution.json"
-        )
+        get_file = lambda name: os.path.join(os.path.dirname(__file__), "data", name)
+        path = get_file("TestInstanceDemo.xml")
+        _json = get_file("example_instance.json")
+        _json_sol = get_file("example_solution.json")
         return [
             Instance.from_xml(path).to_dict(),
             (load_json(_json), load_json(_json_sol)),

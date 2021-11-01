@@ -30,6 +30,8 @@ C_TUPLES = SuperDict(GA1=SuperDict(meetings=True))
 _ID = "_id"
 _CAT = "_cat"
 
+INT_PROPS = ["min", "max", "intp", "penalty"]
+
 
 class Instance(InstanceCore):
     def __init__(self, data: SuperDict):
@@ -51,7 +53,10 @@ class Instance(InstanceCore):
     def get_constraint(self, tag, c_type=None) -> SuperDict:
         if c_type is None:
             return self.data[tag]
-        self.data[tag].vfilter(lambda v: v["type"] == c_type)
+        return self.data[tag].vfilter(lambda v: v["type"] == c_type)
+
+    def get_penalty(self, tag, id) -> float:
+        return self.data.get_m(tag, id, "penalty")
 
     def get_teams(self, property=None) -> SuperDict:
         if property is None:
@@ -74,7 +79,7 @@ class Instance(InstanceCore):
         return data
 
     @classmethod
-    def from_dict(cls, data: dict):
+    def from_dict(cls, data: dict) -> "Instance":
         data_p = SuperDict()
         for table in ["teams", "slots", "leagues"]:
             data_p[table] = {el["id"]: el for el in data[table]}
@@ -150,7 +155,7 @@ def flatten_constraint(constraint):
         # we flatten the lists
         _list = ";".join(_list)
         constraint[key] = _list
-    for el in ["min", "max"]:
+    for el in INT_PROPS:
         try:
             constraint[el] = str(constraint[el])
         except:
@@ -164,7 +169,7 @@ def unflatten_constraint(constraint):
         if len(_list) and C_TUPLES.get_m(constraint[_CAT], key):
             _list = _list.vapply(lambda v: tuple(v.split(",")))
         constraint[key] = _list
-    for el in ["min", "max", "intp"]:
+    for el in INT_PROPS:
         try:
             constraint[el] = int(constraint[el])
         except:

@@ -194,7 +194,6 @@ If you only want to test one solver, you can do the following (assuming your met
 python -m unittest hackathonbaobab2021.tests.tests.SportsScheduling.test_default
 ```
 
-
 ## Command line
 
 The command line app has three main ways to use it.
@@ -228,8 +227,8 @@ from hackathonbaobab2021 import SportsScheduling
 path = "hackathonbaobab2021/data/TestInstanceDemo.xml"
 # create the app
 app = SportsScheduling()
-# initialize an instance object
-instance = app.instance.from_xml(path)
+# initialize an instance object from a RobinX XML format file
+instance = app.instance.from_xml(path=path)
 # get the default solver (in solver/default.py)
 solver = app.get_solver("default")
 # initialize the solver with the instance
@@ -241,6 +240,8 @@ exp.solve({'timeLimit': 2})
 print(exp.check_solution())
 # print the objective function of the solution
 print(exp.get_objective())
+# export the solution to a RobinX XML format file
+exp.to_xml(path="SolutionTestInstanceDemo.xml", instance_name="TestInstanceDemo.xml")
 ```
 
 

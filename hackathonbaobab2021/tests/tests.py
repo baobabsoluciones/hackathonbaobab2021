@@ -115,6 +115,9 @@ class SportsSchedulingTest(BaseDAGTests.SolvingTests):
         tests = self.app.test_cases
         Instance = self.app.instance
         for pos, data in enumerate(tests):
+            if isinstance(data, tuple):
+                # sometimes we have input and output
+                data, data_out = data
             instance = Instance.from_dict(data)
             instance_data = instance.data
             json_path = self.tem_path + "instance.json"
@@ -127,7 +130,9 @@ class SportsSchedulingTest(BaseDAGTests.SolvingTests):
         Instance = self.app.instance
         Solution = self.app.solution
         Experiment = self.app.get_solver("default")
-        experiment = Experiment(Instance(second_test[0]), Solution(second_test[1]))
+        experiment = Experiment(
+            Instance.from_dict(second_test[0]), Solution.from_dict(second_test[1])
+        )
         experiment.to_xml(self.tem_path + "asd.xml")
 
     def test_check_solution(self):
@@ -141,4 +146,5 @@ class SportsSchedulingTest(BaseDAGTests.SolvingTests):
             experiment = Experiment(instance)
             experiment.solve({})
             errors = experiment.check_solution()
+            errors = experiment.get_objective()
             pass
