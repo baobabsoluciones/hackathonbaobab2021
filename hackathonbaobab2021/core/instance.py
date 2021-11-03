@@ -5,32 +5,7 @@ from cornflow_client.core.tools import load_json
 from pytups import SuperDict
 import xml.etree.ElementTree as ET
 from .tools import copy_dict
-
-C_CLUSTER = SuperDict(
-    separation="SeparationConstraints",
-    capacity="CapacityConstraints",
-    breaks="BreakConstraints",
-    fairness="FairnessConstraints",
-    game="GameConstraints",
-)
-
-C_CAT = SuperDict(
-    CA1=["slots", "teams"],
-    CA2=["slots", "teams1", "teams2"],
-    CA3=["teams1", "teams2"],
-    CA4=["teams1", "teams2", "slots"],
-    GA1=["meetings", "slots"],
-    BR1=["teams", "slots"],
-    BR2=["slots", "teams"],
-    SE1=["teams"],
-    FA2=["teams", "slots"],
-)
-C_TUPLES = SuperDict(GA1=SuperDict(meetings=True))
-
-_ID = "_id"
-_CAT = "_cat"
-
-INT_PROPS = ["min", "max", "intp", "penalty"]
+from .constants import C_CLUSTER, C_CAT, C_TUPLES, _CAT, _ID, INT_PROPS
 
 
 class Instance(InstanceCore):

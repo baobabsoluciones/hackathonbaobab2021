@@ -24,10 +24,10 @@ class Solution(SolutionCore):
     def get_assignment(self) -> TupList:
         return self.data["assignment"]
 
-    def get_home_away_slot(self):
+    def get_home_away_slot(self) -> TupList:
         return self.get_assignment().take(["home", "away", "slot"])
 
-    def get_match_slot(self):
+    def get_match_slot(self) -> SuperDict:
         """
         for each match, the slot when it happened
         """
@@ -36,7 +36,7 @@ class Solution(SolutionCore):
             result_col=["slot"], indices=["home", "away"], is_list=False
         )
 
-    def get_pair_slots(self):
+    def get_pair_slots(self) -> SuperDict:
         """
         for each pair (a, b) | (a < b), the ordered slots they play.
         """

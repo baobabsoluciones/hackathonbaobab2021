@@ -11,14 +11,7 @@ from pytups import SuperDict, TupList
 from functools import partial
 
 from itertools import combinations
-
-HOME = "H"
-AWAY = "A"
-SOFT = "SOFT"
-HARD = "HARD"
-GLOBAL = "GLOBAL"
-EVERY = "EVERY"
-status = SuperDict({HOME: "home", AWAY: "away"})
+from .constants import HOME, AWAY, SOFT, HARD, GLOBAL, EVERY, status
 
 
 class Experiment(ExperimentCore):
@@ -283,7 +276,7 @@ class Experiment(ExperimentCore):
 
     def check_SE1(self, **kwargs):
         """
-        (c, ):
+        (c, team1, team2): distance between matches >= min
         """
         constraints = self.instance.get_constraint("SE1", **kwargs)
         value = SuperDict()

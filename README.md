@@ -6,7 +6,7 @@ The problem is the one used for the [ITC 2021: International Timetabling Competi
 
 The following is a very succinct summary from the document found in `hackathonbaobab2021/data/OrganizationITC2021_V7.pdf`, which explains in detail everything about the problem, data format, etc.
 
-We want to plan one-on-one matches between sports team that belong to a single league (we assume there's only one league). We call the complete set of matches a tournament. This tournament follows a double round-robin. This implies that every team plays against every other team two times: once in their home stadium, the other in the adversary's. As a result we have `(N - 1) x 2` matches per team, where `N` is the total number of teams. 
+We want to plan one-on-one matches between sports teams that belong to a single league (we assume there's only one league). We call the complete set of matches a tournament. This tournament follows a double round-robin. This implies that every team plays against every other team two times: once in their home stadium, the other in the adversary's. As a result we have `(N - 1) x 2` matches per team, where `N` is the total number of teams. 
 
 The planning horizon is divided into slots. We assume that each team plays exactly once per slot (i.e., this is a "time-constrained timetable") and thus we have `(N - 1) x 2` slots. We also assume an even number of teams.
 
