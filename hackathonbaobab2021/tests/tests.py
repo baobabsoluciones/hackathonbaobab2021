@@ -1,9 +1,12 @@
 import unittest
 from unittest.mock import patch, Mock, MagicMock
+import os
+import pickle
 
 # we mock everything that's airflow related:
 from cornflow_client import SchemaManager, ApplicationCore
 from cornflow_client.airflow.dag_utilities import cf_solve
+from hackathonbaobab2021 import SportsScheduling
 
 
 class BaseDAGTests:
@@ -13,7 +16,7 @@ class BaseDAGTests:
             self.config = {}
 
         @property
-        def app(self) -> ApplicationCore:
+        def app(self) -> SportsScheduling:
             return self._app
 
         @app.setter
@@ -87,10 +90,61 @@ class BaseDAGTests:
                 mock.write_solution.assert_called_once()
 
 
-class SportsScheduling(BaseDAGTests.SolvingTests):
+class SportsSchedulingTest(BaseDAGTests.SolvingTests):
     def setUp(self):
         super().setUp()
-        from hackathonbaobab2021 import SportsScheduling
 
         self.app = SportsScheduling()
         self.config = dict(solver="default", threads=1, timeLimit=1, msg=False)
+        self.tem_path = "_temp/"
+        if not os.path.exists(self.tem_path):
+            os.mkdir(self.tem_path)
+
+    def tearDown(self) -> None:
+        for filename in os.listdir(self.tem_path):
+            path = os.path.join(self.tem_path, filename)
+            try:
+                os.remove(path)
+            except:
+                pass
+
+    def test_default(self):
+        self.test_try_solving_testcase(dict(solver="default", timeLimit=1, msg=False))
+
+    def test_from_xml_from_json(self):
+        tests = self.app.test_cases
+        Instance = self.app.instance
+        for pos, data in enumerate(tests):
+            if isinstance(data, tuple):
+                # sometimes we have input and output
+                data, data_out = data
+            instance = Instance.from_dict(data)
+            instance_data = instance.data
+            json_path = self.tem_path + "instance.json"
+            instance.to_json(json_path)
+            instance = Instance.from_json(json_path)
+            self.assertEqual(instance_data, instance.data)
+
+    def test_solution_xml(self):
+        second_test = self.app.test_cases[1]
+        Instance = self.app.instance
+        Solution = self.app.solution
+        Experiment = self.app.get_solver("default")
+        experiment = Experiment(
+            Instance.from_dict(second_test[0]), Solution.from_dict(second_test[1])
+        )
+        experiment.to_xml(self.tem_path + "asd.xml")
+
+    def test_check_solution(self):
+        cases = [
+            os.path.join(os.path.dirname(__file__), "../data/{}.xml".format(f))
+            for f in ["ITC2021_Test1", "ITC2021_Test2", "ITC2021_Test3"]
+        ]
+        for filename in cases:
+            instance = self.app.instance.from_xml(filename)
+            Experiment = self.app.get_solver("default")
+            experiment = Experiment(instance)
+            experiment.solve({})
+            errors = experiment.check_solution()
+            errors = experiment.get_objective()
+            pass

@@ -1,33 +1,18 @@
-from pytups import TupList
+from pytups import TupList, OrderSet
 import os
 from cornflow_client import InstanceCore
 from cornflow_client.core.tools import load_json
 from pytups import SuperDict
 import xml.etree.ElementTree as ET
 from .tools import copy_dict
-
-C_CLUSTER = SuperDict(
-    separation="SeparationConstraints",
-    capacity="CapacityConstraints",
-    breaks="BreakConstraints",
-    fairness="FairnessConstraints",
-    game="GameConstraints",
-)
-
-C_CAT = SuperDict(
-    CA1=["slots"],
-    CA3=["teams1", "teams2"],
-    GA1=["meetings", "slots"],
-    BR2=["slots", "teams"],
-    SE1=["teams"],
-)
-C_TUPLES = SuperDict(GA1=SuperDict(meetings=True))
-
-_ID = "_id"
-_CAT = "_cat"
+from .constants import C_CLUSTER, C_CAT, C_TUPLES, _CAT, _ID, INT_PROPS
 
 
 class Instance(InstanceCore):
+    def __init__(self, data: SuperDict):
+        super().__init__(data)
+        self.slots = OrderSet(data["slots"].keys_tl().sorted())
+
     schema = load_json(
         os.path.join(os.path.dirname(__file__), "../schemas/instance.json")
     )
@@ -39,6 +24,14 @@ class Instance(InstanceCore):
     @data.setter
     def data(self, value: SuperDict):
         self._data = value
+
+    def get_constraint(self, tag, c_type=None) -> SuperDict:
+        if c_type is None:
+            return self.data[tag]
+        return self.data[tag].vfilter(lambda v: v["type"] == c_type)
+
+    def get_penalty(self, tag, id) -> float:
+        return self.data.get_m(tag, id, "penalty")
 
     def get_teams(self, property=None) -> SuperDict:
         if property is None:
@@ -61,7 +54,7 @@ class Instance(InstanceCore):
         return data
 
     @classmethod
-    def from_dict(cls, data: dict):
+    def from_dict(cls, data: dict) -> "Instance":
         data_p = SuperDict()
         for table in ["teams", "slots", "leagues"]:
             data_p[table] = {el["id"]: el for el in data[table]}
@@ -137,6 +130,11 @@ def flatten_constraint(constraint):
         # we flatten the lists
         _list = ";".join(_list)
         constraint[key] = _list
+    for el in INT_PROPS:
+        try:
+            constraint[el] = str(constraint[el])
+        except:
+            continue
 
 
 def unflatten_constraint(constraint):
@@ -146,3 +144,8 @@ def unflatten_constraint(constraint):
         if len(_list) and C_TUPLES.get_m(constraint[_CAT], key):
             _list = _list.vapply(lambda v: tuple(v.split(",")))
         constraint[key] = _list
+    for el in INT_PROPS:
+        try:
+            constraint[el] = int(constraint[el])
+        except:
+            continue
